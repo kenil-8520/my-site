@@ -1,13 +1,13 @@
 from django.shortcuts import render
-from .serializers import AppointmentSerlizer, AvailabilitiesSerializers, BeauticianServicesSerializer,BeauticianServicesSerializerget
+from .serializers import AppointmentSerlizer, AvailabilitiesSerializers, BeauticianServicesSerializer, BeauticianServicesSerializerget
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from django.http import JsonResponse
 from rest_framework import status
 from .models import AppointmentModel, BeauticianAvailabilities, BeauticianServices
-from api.models import Beautician,User
-from datetime import date
+from api.models import Beautician, User
+from api.serializers import BeauticianRegistrationSerializer, ServicesSerializer
 import json
 
 
@@ -69,17 +69,43 @@ class BeauticianServicesView(APIView):
         })
 
 
-
 class AppointmentView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, format=None):
-        serializer = AppointmentModel.objects.filter(
-            user_id=request.user.id).values()
-        return JsonResponse({
-            'status': 200,
-            'data': list(serializer)
-        })
+        user = User.objects.get(pk=request.user.id)
+        if not user.is_beautician:
+            beautician = list()
+            data = dict()
+            appt = AppointmentModel.objects.filter(user_id=request.user.id)
+            for app in appt:
+                ser = app.appointment_service.all().values()
+                data = app.__dict__.copy()
+                data['appointment_service'] = list(ser.values())
+                data.pop('_state')
+                beautician.append(data)
+            return JsonResponse({
+                'status': 200,
+                'data': beautician
+            })
+        else:
+            user = User.objects.get(pk=request.user.id)
+            beauty = Beautician.objects.get(user_id=request.user.id)
+            user_id = BeauticianServices.objects.all().values()
+            appt = AppointmentModel.objects.all()
+            beautician = list()
+            if user == beauty.user_id:
+                for i in user_id:
+                    if beauty.id == i.get('beautician_id_id'):
+                        for data in appt.values():
+                            print(data)
+                            serializer = AppointmentSerlizer(data, many=True)
+                            if i.get('id') == data.get('beautician_id_id'):
+                                print(data.get('beautician_id_id'))
+                                beautician.append(data)
+                        return JsonResponse({
+                            'data': beautician
+                        })
 
     def post(self, request, format=None):
         serializer = AppointmentSerlizer(data=request.data)
@@ -88,15 +114,21 @@ class AppointmentView(APIView):
         beautician = json.loads(BeauticianServicesView().get(request))[0]
         flag = True
         for service in data.get("appointment_service"):
-                if service.id in beautician['services_id']:
-                    serializer.save(user_id=request.user)
-                    flag = True
-                    return JsonResponse({
+            if service.id in beautician['services_id']:
+                serializer.save(user_id=request.user)
+                flag = True
+                return JsonResponse({
                     'status': 201,
                     'message': 'Appointment successfully',
                     'data': serializer.data
-                    })
-                else:
-                    flag = False
+                })
+            else:
+                flag = False
         if flag is False:
                 return JsonResponse({'message': 'no data available'})
+
+    def delete(self, request):
+        data = AppointmentModel.objects.filter(status__startswith='D').delete()
+        return JsonResponse({
+            'message': 'Appointment successfully deleted'
+        })

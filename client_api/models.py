@@ -1,4 +1,3 @@
-from unittest.util import _MAX_LENGTH
 from django.db import models
 from api.models  import User,Beautician,Service
 from datetime import date
@@ -23,6 +22,11 @@ class BeauticianServices(models.Model):
     def __str__(self):
         return str(self.beautician_id)
 
+status = (
+    ('Approved', 'Approved'),
+    ('Panding', 'Panding'),
+    ('Delete', 'Delete')
+)
 class AppointmentModel(models.Model):
     appointment_name = models.CharField(max_length=255)
     beautician_id = models.ForeignKey(BeauticianServices, on_delete = models.CASCADE)
@@ -31,6 +35,7 @@ class AppointmentModel(models.Model):
     appointment_date = models.DateField()
     appointment_time = models.TimeField()
     location = models.CharField(max_length=255, blank=True, null=True)
+    status = models.CharField(choices=status,default ='Panding',max_length=255)
 
     def __str__(self):
         return str(self.appointment_name)

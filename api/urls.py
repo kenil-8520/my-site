@@ -1,7 +1,7 @@
 from django.urls import path,include
 from django.conf import settings
 from django.conf.urls.static import static
-from .views import UserRegistrationView, UserLoginView, UserProfileView, UserChangePasswordView,SendPasswordResetEmailView,UserPasswordResetView,UserBeauticianView,BeauticianRegistrationView,BeauticianphotoView,ServicesView, ContactusView,BeauticianGetView,Paginationview,AddServiceView,ServicesDetailView,BeauticianServiceView
+from .views import UserRegistrationView, UserLoginView, UserProfileView, UserChangePasswordView,SendPasswordResetEmailView,UserPasswordResetView,UserBeauticianView,BeauticianRegistrationView,BeauticianphotoView,ServicesView, ContactusView,BeauticianGetView,Paginationview,AddServiceView,ServicesDetailView,BeauticianServiceView,BeauticianDetails
 
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -26,5 +26,7 @@ urlpatterns = [
     path('page/',Paginationview.as_view(), name='pagination'),
     path('service/beautician/',BeauticianServiceView.as_view(), name='test'),
     path('add-service/',AddServiceView.as_view(), name='add-service'),
+    path('beautician/details/',BeauticianDetails.as_view(), name='deatils'),
+    path('service/beautician/',BeauticianServiceView.as_view(), name='test'),
 
 ]+static(settings.MEDIA_URL,document_root=settings.MEDIA_ROOT)

@@ -11,7 +11,7 @@ from api.helper import modify_input_for_multiple_files
 from rest_framework.generics import ListAPIView
 from .paginations import CustomPagePagination
 from client_api.models import BeauticianServices
-from client_api.serializers import BeauticianServicesSerializer
+from client_api.serializers import BeauticianServicesSerializer,BeauticianServicesSerializerget
 from django.db.models import Q
 
 def get_tokens_for_user(user):
@@ -72,6 +72,7 @@ class UserProfileView(APIView):
             'status': 200,
             'data': serializer.data
         })
+
 
 class UserChangePasswordView(APIView):
     permission_classes = [IsAuthenticated]
@@ -175,7 +176,7 @@ class BeauticianphotoView(APIView):
         for img_name in images:
             modified_data = modify_input_for_multiple_files(user,
                                                             img_name)
-            serializer = BeauticianphotoSerializer(data=modified_data)
+            serializer = BeauticianphotoSerializer(data=modified_data,many=True)
             if serializer.is_valid():
                 serializer.save()
                 arr.append(serializer.data)
@@ -219,7 +220,6 @@ class ServicesDetailView(APIView):
     def get(self, request,format=None):
         allservice = Service.objects.all()
         serializer = ServicesDetailSerializer(allservice,many=True)
-
         return JsonResponse({
             'status': 200,
             'service': serializer.data
@@ -273,3 +273,20 @@ class BeauticianServiceView(APIView):
             'profile':ser.data
         })
 
+class BeauticianDetails(APIView):
+    def get(self, request, format = None):
+        id_list = request.query_params.getlist('beautician_id')
+        profile_user = Beautician.objects.filter(id__in=id_list).distinct()
+        serializer_profile = BeauticianRegistrationSerializer(profile_user,many =True)
+        id_li = request.query_params.getlist('beautician_id')
+        data = BeauticianServices.objects.filter(beautician_id__in=id_li).distinct()
+        allimg = Beauticianphoto.objects.filter(user_id__in=id_list)
+        serializer= BeauticianServicesSerializerget(data,many=True)
+        serializer_photo = BeauticianphotoSerializer(allimg,many=True)
+        print(serializer.data)
+        return JsonResponse({
+            'status': 200,
+            'profile':serializer_profile.data,
+            'service': serializer.data,
+            'beautician_photos': serializer_photo.data
+        })
